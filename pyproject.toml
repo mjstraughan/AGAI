@@ -7,7 +7,12 @@ authors = [
     { name = "mjstraughan", email = "athefre@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+    "marimo>=0.25.0",
+    "pydantic>=2.13.5",
+    "spacy>=3.8.16",
+]
 
 [project.scripts]
 sps-genai = "sps_genai:main"
