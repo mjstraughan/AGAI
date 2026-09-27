@@ -6,7 +6,6 @@ import spacy
 
 app = FastAPI()
 
-# --- Module 3: Bigram Text Generator ---
 corpus = [
     "The Count of Monte Cristo is a novel written by Alexandre Dumas.",
     "It tells the story of Edmond Dantes who is falsely imprisoned and later seeks revenge.",
@@ -30,7 +29,6 @@ def generate_text(request: TextGenerationRequest):
     generated_text = bigram_model_inst.generate_text(request.start_word, request.length)
     return {"generated_text": generated_text}
 
-# --- Module 2: Spacy Word Embeddings ---
 nlp = spacy.load("en_core_web_lg")
 
 def calculate_embedding(input_word):
