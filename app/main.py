@@ -7,6 +7,8 @@ from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 from pydantic import BaseModel
 from torchvision import transforms
+from fastapi.responses import StreamingResponse
+import torchvision.transforms as T
 
 # Assuming helper_lib is located in your src/ folder. Adjust if necessary.
 from src.helper_lib.model import get_model 
@@ -34,6 +36,11 @@ cnn_model = get_model("CustomCNN")
 # Load the weights saved from train.py
 cnn_model.load_state_dict(torch.load("cifar10_model.pth", weights_only=True))
 cnn_model.eval()
+
+# 4. GAN MODEL
+gan_model = get_model("GAN")
+gan_model.load_state_dict(torch.load("gan_mnist.pth", weights_only=True))
+gan_model.eval()
 
 # --- Pydantic Request Models ---
 
@@ -104,3 +111,26 @@ async def classify_image(file: UploadFile = File(...)):
     _, predicted_class = torch.max(output, 1)
     
     return {"predicted_class": predicted_class.item()}
+
+@app.get("/generate-digit/")
+def generate_digit():
+    """Generates a random MNIST digit using the trained GAN."""
+    with torch.no_grad():
+        # Generate random noise vector
+        z = torch.randn(1, 100)
+        # Pass through generator
+        fake_image_tensor = gan_model.generator(z)
+        
+        # Denormalize image from [-1, 1] Tanh output to [0, 1]
+        fake_image_tensor = (fake_image_tensor.squeeze(0).squeeze(0) + 1.0) / 2.0
+        fake_image_tensor = fake_image_tensor.clamp(0, 1)
+        
+        # Convert to PIL Image
+        img_pil = T.ToPILImage()(fake_image_tensor)
+        
+        # Save to buffer and serve as streaming response
+        buf = io.BytesIO()
+        img_pil.save(buf, format="PNG")
+        buf.seek(0)
+        
+        return StreamingResponse(buf, media_type="image/png")

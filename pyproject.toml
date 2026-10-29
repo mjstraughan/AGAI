@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.141.1",
     "marimo>=0.25.0",
+    "matplotlib>=3.11.2",
     "pillow>=12.3.0",
     "pip>=26.2.1",
     "pydantic>=2.13.5",

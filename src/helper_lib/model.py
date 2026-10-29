@@ -45,22 +45,64 @@ class CustomCNN(nn.Module):
         x = self.fc2(x)
         return x
 
+# --- NEW GAN ARCHITECTURE ---
+
+class Generator(nn.Module):
+    def __init__(self):
+        super(Generator, self).__init__()
+        self.fc = nn.Linear(100, 6272)
+        
+        self.conv_blocks = nn.Sequential(
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+            
+            nn.ConvTranspose2d(64, 1, kernel_size=4, stride=2, padding=1),
+            nn.Tanh()
+        )
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = x.view(-1, 128, 7, 7)
+        return self.conv_blocks(x)
+
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+        self.model = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=4, stride=2, padding=1),
+            nn.LeakyReLU(0.2, inplace=True),
+            
+            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            
+            nn.Flatten(),
+            nn.Linear(128 * 7 * 7, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        return self.model(x)
+
+class GAN(nn.Module):
+    def __init__(self):
+        super(GAN, self).__init__()
+        self.generator = Generator()
+        self.discriminator = Discriminator()
+
 # 3. Implement the routing function
 def get_model(model_name):
     if model_name == "CNN":
-        # Returns the custom CNN defined above
         model = SimpleCNN()
         
     elif model_name == "CustomCNN":
-        # Returns the Assignment 2 CNN for CIFAR10
         model = CustomCNN()
         
     elif model_name == "EnhancedCNN":
-        # Returns the pre-trained ResNet18 model imported at the top
         model = resnet18(weights=ResNet18_Weights.DEFAULT)
         
     elif model_name == "FCNN":
-        # Returns a standard Fully Connected Neural Network
         model = nn.Sequential(
             nn.Flatten(),
             nn.Linear(3 * 224 * 224, 512),
@@ -68,7 +110,10 @@ def get_model(model_name):
             nn.Linear(512, 1000)
         )
         
+    elif model_name == "GAN":
+        model = GAN()
+        
     else:
-        raise ValueError("Invalid model_name. Choose FCNN, CNN, CustomCNN, or EnhancedCNN.")
+        raise ValueError("Invalid model_name. Choose FCNN, CNN, CustomCNN, EnhancedCNN, or GAN.")
     
     return model
